@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Ad Track</string>
+    <!-- MainActivity< -->
+    <string name="About_the_project">"Thanks for using Ad Track!\nPlease turn on Bluetooth and permit Ad Track to use Bluetooth"</string>
+    <string name="Bluetooth_Off">"Bluetooth Status:OFF"</string>
+    <string name="Bluetooth_On">"Bluetooth Status:ON"</string>
+    <string name="Bluetooth_Not_Permitted">"Bluetooth Using: Not Permitted"</string>
+    <string name="Bluetooth_Permitted">"Bluetooth Using: Permitted"</string>
+    <string name="Button_MainActivity_About_Us">"About Us"</string>
+
+    <!-- aboutvtec< -->
+    <string name="About_VTEC">"VTEC Lasers &#38; Sensors\n\n Kastanjelaan 400\n\n 5616 LZ Eindhoven\n\n The Netherlands\n\n info@vtec-ls.nl"</string>
+    <string name="Button_aboutvtec_BACK">"Back"</string>
+</resources>
