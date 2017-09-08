@@ -1,3 +1,5 @@
+#recommendation: 1. set a limit to ignore the devices staying in the range more than 5 minutes
+#                2. batch writing: 10 records and send. Suggest set a time limit: send the records nom matter how many records there are if no records added in 30 seconds.
 DEBUG = False
 
 
@@ -16,6 +18,8 @@ city="Initializing"
 
 MAC_Record = {"ini":0}
 timeOld= time.time()
+itemNumber=0
+item=[]
 
 LE_META_EVENT = 0x3e
 LE_PUBLIC_ADDRESS=0x00
@@ -135,7 +139,7 @@ def visit(url):
     
 def sendData(dataToSend):
     requestBody = dataToSend
-    r = requests.post("https://m8ncryslai.execute-api.eu-central-1.amazonaws.com/test/viewers", data=requestBody)
+    r = requests.post("https://m8ncryslai.execute-api.eu-central-1.amazonaws.com/test/batch-writing-passer", data=requestBody)
     print(r.status_code, r.reason)
 
 
@@ -147,6 +151,8 @@ def parse_events(sock, loop_count=100):
     global MAC_Record
     global city
     global canIGetLocation
+    global itemNumber
+    global item
     
     old_filter = sock.getsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, 14)
 
@@ -193,7 +199,7 @@ def parse_events(sock, loop_count=100):
                 
                 
                 
-                #if the distance is smaller than 3m(+/-2m)
+                
                 if rssi_int>-65:
                     if (canIGetLocation==True):
                         city=getLocation()
@@ -211,41 +217,60 @@ def parse_events(sock, loop_count=100):
 
                     rssi, = struct.unpack("b", pkt[report_pkt_offset -1])
                     print "\tRSSI:", rssi
-                    advertisementBoardID=uuid.uuid1()
-                    
+                    advertisementBoardID=str(uuid.uuid1())[-12:]
+                    print itemNumber
                     
                     if MAC in MAC_Record:
-                            if time.time()-MAC_Record[MAC] > 30:
+                            if time.time()-MAC_Record[MAC] > 5:
                                 timeN = time.strftime("%Y/%m/%d %H:%M:%S",time.localtime())
-                                requestBody0="{\"operation\": \"create\",\"tableName\": \"Ad-track\",\"payload\": {\"Item\": {\"Date & Time\":\""+timeN+"\","
+                                '''requestBody0="{\"operation\": \"create\",\"tableName\": \"Ad-track\",\"payload\": {\"Item\": {\"Date & Time\":\""+timeN+"\","
                                 requestBody1="\"Mobile Phone ID\": \""+ str(MAC)+"\","
                                 requestBody2="\"Adertisement Board ID\": \""+ str(advertisementBoardID)+"\","
                                 requestBody3="\"City\": \""+ city+"\"}}}"
-                                requestBody =requestBody0+requestBody1+requestBody2+requestBody3
-                                r = requests.post("https://m8ncryslai.execute-api.eu-central-1.amazonaws.com/test/viewers", data=requestBody)
-                                print(r.status_code, r.reason)
+                                requestBody =requestBody0+requestBody1+requestBody2+requestBody3'''
+                                item.append("{\"Date & Time\":\""+timeN+"\",\"Mobile Phone ID\": \""+ str(MAC)+"\",\"Advertisement Board ID\": \""+ advertisementBoardID+"\",\"City\": \""+ city+"\"}")
+                                itemNumber += 1
+                                print item
                     
                     else:
                         timeN = time.strftime("%Y/%m/%d %H:%M:%S",time.localtime())
-                        requestBody0="{\"operation\": \"create\",\"tableName\": \"Ad-track\",\"payload\": {\"Item\": {\"Date & Time\":\""+timeN+"\","
+                        '''requestBody0="{\"operation\": \"create\",\"tableName\": \"Ad-track\",\"payload\": {\"Item\": {\"Date & Time\":\""+timeN+"\","
                         requestBody1="\"Mobile Phone ID\": \""+ str(MAC)+"\","
                         requestBody2="\"Adertisement Board ID\": \""+ str(advertisementBoardID)+"\","
                         requestBody3="\"City\": \""+city+"\"}}}"
-                        requestBody =requestBody0+requestBody1+requestBody2+requestBody3
-                        r = requests.post("https://m8ncryslai.execute-api.eu-central-1.amazonaws.com/test/viewers", data=requestBody)
-                        print(r.status_code, r.reason)
+                        requestBody =requestBody0+requestBody1+requestBody2+requestBody3'''
+                        item.append("{\"Date & Time\":\""+timeN+"\",\"Mobile Phone ID\": \""+ str(MAC)+"\",\"Advertisement Board ID\": \""+ advertisementBoardID+"\",\"City\": \""+ city+"\"}")
+                        itemNumber += 1
+                        print item
                     MAC_Record[MAC] = time.time()
                         
                     
                     timeNew = time.time()
                     
-                    if (timeNew - timeOld > 35) :
+                    if (timeNew - timeOld >30) :
                         print(MAC_Record)
                         MAC_Record.clear()
                         timeOld = timeNew
                         '''for i in MAC_Record.keys():
                             if timeNew - MAC_Record[i] > 11:
                                 del MAC_Record[i]'''
+
+
+                        
+                    if(itemNumber>9):
+                        
+                        requestBody1="{\"tableName\": \"Ad-track\",\"payload\":{\"0\":"+item[0]+",\"1\":"+item[1]+",\"2\":"+item[2]+",\"3\":"+item[3]+",\"4\":"+item[4]
+                        requestBody2=",\"5\":"+item[5]+",\"6\":"+item[6]+",\"7\":"+item[7]+",\"8\":"+item[8]+",\"9\":"+item[9]+"}}"
+                        #requestBody3=",\"10\":"+item[10]+",\"11\":"+item[11]+",\"12\":"+item[12]+",\"13\":"+item[13]+",\"14\":"+item[14]+"}}"
+                        #requestBody4=",\"15\":"+item[15]+",\"16\":"+item[16]+",\"7\":"+item[17]+",\"18\":"+item[18]+",\"19\":"+item[19]
+                        #requestBody5=",\"20\":"+item[20]+",\"21\":"+item[21]+",\"22\":"+item[22]+",\"23\":"+item[23]+",\"24\":"+item[24]+"}}"
+                        requestBody= requestBody1+requestBody2
+                        #+requestBody3
+                        #+requestBody4+requestBody5
+                        print requestBody
+                        sendData(requestBody)
+                        del item[:]
+                        itemNumber=0
                        
                     
                              
